@@ -6,40 +6,40 @@ import {
   type BankSummary,
 } from '@/lib/bank-statements';
 
-// Mirrors the Acme Holdings "Business Checking Account Statement" pdftotext shape:
+// Mirrors the IntelliReach "Business Checking Account Statement" pdftotext shape:
 // label on one line, the $value at the start of the next.
 const SAMPLE = [
   'Business Checking Account Statement',
-  'Acme Holdings LLC',
+  'IntelliReach LLC',
   'Statement Date: 04/30/2026',
-  'Account Ending: *7001 Account Name: General Operations',
+  'Account Ending: *4219 Account Name: General Operations',
   'Statement Summary',
   'Beginning Balance as of 04/01/2026',
-  '$12,450.30 Earned Period',
+  '$14,591.71 Earned Period',
   'Total Credits This Period',
-  '$21,300.40 Days in Statement Period',
+  '$25,899.28 Days in Statement Period',
   'Total Debits This Period',
-  '-$17,850.15 Interest Rate1',
+  '-$21,695.58 Interest Rate1',
   'Ending Balance as of 04/30/2026',
-  '$15,900.55',
+  '$18,795.41',
 ].join('\n');
 
 describe('parseBankStatementSummary', () => {
   it('pulls account, business, month, credits, debits, net from the summary', () => {
     expect(parseBankStatementSummary(SAMPLE)).toEqual({
-      account: '7001',
+      account: '4219',
       business: 'General Operations',
       month: '2026-04',
-      creditsCents: 2130040,
-      debitsCents: 1785015,
-      netCents: 2130040 - 1785015,
+      creditsCents: 2589928,
+      debitsCents: 2169558,
+      netCents: 2589928 - 2169558,
     });
   });
 
-  it('handles the Vantage (7002) account', () => {
-    const s = SAMPLE.replace('*7001 Account Name: General Operations', '*7002 Account Name: Vantage');
+  it('handles the Vantage (5630) account', () => {
+    const s = SAMPLE.replace('*4219 Account Name: General Operations', '*5630 Account Name: Vantage');
     const out = parseBankStatementSummary(s)!;
-    expect(out.account).toBe('7002');
+    expect(out.account).toBe('5630');
     expect(out.business).toBe('Vantage');
   });
 
@@ -61,10 +61,10 @@ const sum = (account: string, business: string, month: string, credits: number, 
 describe('businessSeries', () => {
   it('groups by business, sorts months ascending, dedupes by month', () => {
     const series = businessSeries([
-      sum('7001', 'General Operations', '2026-04', 21300_40, 17850_15),
-      sum('7002', 'Vantage', '2026-04', 40000_00, 12000_00),
-      sum('7001', 'General Operations', '2026-03', 18000_00, 15000_00),
-      sum('7001', 'General Operations', '2026-04', 21300_40, 17850_15), // dup month → one
+      sum('4219', 'General Operations', '2026-04', 25899_28, 21695_58),
+      sum('5630', 'Vantage', '2026-04', 40000_00, 12000_00),
+      sum('4219', 'General Operations', '2026-03', 18000_00, 15000_00),
+      sum('4219', 'General Operations', '2026-04', 25899_28, 21695_58), // dup month → one
     ]);
     expect(series.map((s) => s.business)).toEqual(['General Operations', 'Vantage']);
     const genops = series.find((s) => s.business === 'General Operations')!;
